@@ -1,0 +1,21 @@
+[EMAIL]
+# Configuração de Email (opcional - se não configurado, emails serão exibidos no console)
+
+# Gmail
+smtp_server = smtp.gmail.com
+smtp_port = 587
+
+# Seu email
+email = seu_email@gmail.com
+
+# Senha de aplicativo (não use senha da conta)
+# Veja: https://support.google.com/accounts/answer/185833
+password = sua_senha_app
+
+# Email do administrador (para receber cópias das notificações)
+admin_email = seu_email@gmail.com
+
+# Outras provedoras:
+# Outlook: smtp-mail.outlook.com (porta 587)
+# Yahoo: smtp.mail.yahoo.com (porta 587)
+# Empresa: conforme configuração da sua empresa
