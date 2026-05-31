@@ -1,4 +1,4 @@
-"""
+""""
 Gerenciador de Despesas e Vales
 Interface gráfica para gerenciar despesas da empresa e vales de funcionários
 """
