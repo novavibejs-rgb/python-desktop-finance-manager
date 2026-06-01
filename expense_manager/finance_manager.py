@@ -4,6 +4,7 @@ import os
 
 
 class Financeiro:
+
     def __init__(self, arquivo="dados_financeiros.json"):
         self.arquivo = arquivo
         self.dados = self.carregar_dados()
@@ -30,6 +31,7 @@ class Financeiro:
                     "nome": "Irmao"
                 }
             ],
+            "fucionarios": [],
             "servicos": [],
             "vales": []
         }

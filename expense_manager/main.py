@@ -5,13 +5,12 @@ Interface gráfica para gerenciar despesas da empresa e vales de funcionários
 
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
-from expense_manager import ExpenseManager
+from finance_manager import Financeiro
 from email_service import EmailService
 import json
 from datetime import datetime
 import os
-def formatar_moeda(valor):
-    return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
 
 class ExpenseManagerApp:
     def __init__(self, root):
@@ -21,7 +20,7 @@ class ExpenseManagerApp:
         self.root.geometry("900x600")
 
         # Carrega dados
-        self.expense_manager = ExpenseManager()
+        self.financeiro = Financeiro()
         self.email_service = EmailService()
 
         # Define estilo
