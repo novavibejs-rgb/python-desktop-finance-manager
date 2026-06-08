@@ -1,28 +1,14 @@
 {
-  "total_balance": 3.0,
-  "expenses": [
+  "socios": [
     {
       "id": 1,
-      "date": "2026-05-29T19:05:56.907863",
-      "description": "magueira de nivel ",
-      "value": 10.0,
-      "category": "Outro",
-      "percentage_20": 2.0,
-      "available": 8.0,
-      "status": "registered"
-    }
-  ],
-  "vales": [
+      "nome": "Jhonatan"
+    },
     {
-      "id": 1,
-      "date": "2026-05-29T19:19:12.486375",
-      "employee_name": "jeanderson",
-      "value": 5.0,
-      "reason": "cigarros",
-      "email": "ellyannysantos8@gmail.com",
-      "status": "approved",
-      "discount_date": null
+      "id": 2,
+      "nome": "Irmao"
     }
   ],
-  "gastos_reserve": 2.0
+  "servicos": [],
+  "vales": []
 }
