@@ -5,50 +5,6 @@ import os
 
 class Financeiro:
 
-    def __init__(self, arquivo="dados_financeiros.json"):
-        self.arquivo = arquivo
-        self.dados = self.carregar_dados()
-
-    def carregar_dados(self):
-        if os.path.exists(self.arquivo):
-            try:
-                with open(self.arquivo, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except:
-                pass
-
-        return self.dados_padrao()
-
-    def dados_padrao(self):
-        return {
-            "socios": [
-                {
-                    "id": 1,
-                    "nome": "Jhonatan"
-                },
-                {
-                    "id": 2,
-                    "nome": "Irmao"
-                }
-            ],
-            "fucionarios": [],
-            "servicos": [],
-            "vales": []
-        }
-
-    def salvar_dados(self):
-        with open(self.arquivo, "w", encoding="utf-8") as f:
-            json.dump(
-                self.dados,
-                f,
-                indent=2,
-                ensure_ascii=False
-            )
-
-    # =====================
-    # SERVIÇOS
-    # =====================
-
     def adicionar_servico(self, descricao, valor_bruto):
         servico = {
             "id": len(self.dados["servicos"]) + 1,

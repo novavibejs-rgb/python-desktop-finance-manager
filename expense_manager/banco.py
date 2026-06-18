@@ -194,14 +194,22 @@ def faturamento_semana():
     conn = conectar()
     cursor = conn.cursor()
 
-    sete_dias = datetime.now() - timedelta(days=7)
-    sete_dias = sete_dias.strftime("%Y-%m-%d %H:%M:%S")
+    hoje = datetime.now()
+
+    # segunda-feira da semana atual
+    inicio_semana = hoje - timedelta(days=hoje.weekday())
+    inicio_semana = inicio_semana.replace(
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0
+    )
 
     cursor.execute("""
-    SELECT SUM(valor)
-    FROM servicos
-    WHERE data >= ?
-    """, (sete_dias,))
+        SELECT SUM(valor)
+        FROM servicos
+        WHERE data >= ?
+    """, (inicio_semana.strftime("%Y-%m-%d %H:%M:%S"),))
 
     total = cursor.fetchone()[0]
 
@@ -209,8 +217,8 @@ def faturamento_semana():
 
     return total if total is not None else 0
 
-
 def calcular_faturamento_total():
+
     conn = conectar()
     cursor = conn.cursor()
 
