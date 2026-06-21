@@ -3,7 +3,9 @@ from datetime import datetime, timedelta
 
 
 def conectar():
-    return sqlite3.connect("financeiro.db")
+    conn = sqlite3.connect("financeiro.db")
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
 
 
 # ==================== TABELAS ====================
@@ -15,7 +17,8 @@ def criar_tabelas():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS socios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome TEXT NOT NULL
+        nome TEXT NOT NULL,
+        foto TEXT
     )
     """)
 
@@ -34,16 +37,21 @@ def criar_tabelas():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS vales (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome_socio TEXT NOT NULL,
+        id_socio INTEGER NOT NULL,
         valor REAL NOT NULL,
         descricao TEXT,
-        data TEXT
+        semana_id INTEGER NOT NULL,
+        data TEXT,
+        FOREIGN KEY (id_socio) REFERENCES socios(id) ON DELETE CASCADE
     )
     """)
 
     conn.commit()
     conn.close()
+    
 
+#criar tabelas      
+criar_tabelas()
 
 # ==================== SÓCIOS ====================
 
@@ -59,7 +67,6 @@ def cadastrar_socio(nome):
     conn.commit()
     conn.close()
 
-
 def listar_socios():
     conn = conectar()
     cursor = conn.cursor()
@@ -74,8 +81,8 @@ def listar_socios():
 
     return socios
 
-
 def atualizar_socio(id_socio, novo_nome):
+
     conn = conectar()
     cursor = conn.cursor()
 
@@ -88,7 +95,6 @@ def atualizar_socio(id_socio, novo_nome):
     conn.commit()
     conn.close()
 
-
 def excluir_socio(id_socio):
     conn = conectar()
     cursor = conn.cursor()
@@ -100,6 +106,43 @@ def excluir_socio(id_socio):
 
     conn.commit()
     conn.close()
+
+def buscar_dados_socio(id_socio):
+    conn = conectar()
+    cursor = conn.cursor()
+
+    # dados do sócio
+    cursor.execute("""
+    SELECT nome, foto
+    FROM socios
+    WHERE id = ?
+    """, (id_socio,))
+
+    socio = cursor.fetchone()
+
+    if socio is None:
+        conn.close()
+        return None
+
+    nome, foto = socio
+
+    # vales do sócio
+    cursor.execute("""
+    SELECT COUNT(*), COALESCE(SUM(valor), 0)
+    FROM vales
+    WHERE id_socio = ?
+    """, (id_socio,))
+
+    quantidade_vales, total_vales = cursor.fetchone()
+
+    conn.close()
+
+    return {
+        "nome": nome,
+        "foto": foto,
+        "quantidade_vales": quantidade_vales,
+        "total_vales": total_vales
+    }
 
 
 # ==================== SERVIÇOS ====================
@@ -114,33 +157,21 @@ def adicionar_servico(nome_cliente, servico, descricao, valor, forma_pagamento):
     INSERT INTO servicos
     (cliente, servico, descricao, valor, forma_pagamento, data)
     VALUES (?, ?, ?, ?, ?, ?)
-    """, (
-        nome_cliente,
-        servico,
-        descricao,
-        valor,
-        forma_pagamento,
-        data
-    ))
+    """, (nome_cliente, servico, descricao, valor, forma_pagamento, data))
 
     conn.commit()
     conn.close()
-
 
 def listar_servicos():
     conn = conectar()
     cursor = conn.cursor()
 
-    cursor.execute("""
-    SELECT * FROM servicos
-    """)
+    cursor.execute("SELECT * FROM servicos")
 
     servicos = cursor.fetchall()
 
     conn.close()
-
     return servicos
-
 
 def buscar_servico_por_id(id_servico):
     conn = conectar()
@@ -156,7 +187,6 @@ def buscar_servico_por_id(id_servico):
     conn.close()
 
     return servico
-
 
 def excluir_servico(id_servico):
     conn = conectar()
@@ -236,21 +266,20 @@ def calcular_faturamento_total():
 
 # ==================== VALES ====================
 
-def adicionar_vale(nome_socio, valor, descricao):
+def adicionar_vale(id_socio, valor, descricao):
     conn = conectar()
     cursor = conn.cursor()
 
     data = datetime.now().strftime("%d/%m/%Y | %H:%M:%S")
+    semana_id = semana_atual()
 
     cursor.execute("""
-    INSERT INTO vales
-    (nome_socio, valor, descricao, data)
-    VALUES (?, ?, ?, ?)
-    """, (nome_socio, valor, descricao, data))
+    INSERT INTO vales (id_socio, valor, descricao, semana_id, data)
+    VALUES (?, ?, ?, ?, ?)
+    """, (id_socio, valor, descricao, semana_id, data))
 
     conn.commit()
     conn.close()
-
 
 def listar_vales():
     conn = conectar()
@@ -263,9 +292,7 @@ def listar_vales():
     vales = cursor.fetchall()
 
     conn.close()
-
     return vales
-
 
 def buscar_vale_por_id(id_vale):
     conn = conectar()
@@ -282,22 +309,21 @@ def buscar_vale_por_id(id_vale):
 
     return vale
 
-
-def atualizar_vale(id_vale, nome_socio, valor, descricao):
+def atualizar_vale(id_vale, id_socio, valor, descricao, semana_id):
     conn = conectar()
     cursor = conn.cursor()
 
     cursor.execute("""
     UPDATE vales
-    SET nome_socio = ?,
+    SET id_socio = ?,
         valor = ?,
-        descricao = ?
+        descricao = ?,
+        semana_id = ?
     WHERE id = ?
-    """, (nome_socio, valor, descricao, id_vale))
+    """, (id_socio, valor, descricao, semana_id, id_vale))
 
     conn.commit()
     conn.close()
-
 
 def excluir_vale(id_vale):
     conn = conectar()
@@ -311,18 +337,88 @@ def excluir_vale(id_vale):
     conn.commit()
     conn.close()
 
-
 def calcular_total_vales():
     conn = conectar()
     cursor = conn.cursor()
 
     cursor.execute("""
-    SELECT SUM(valor)
+    SELECT COALESCE(SUM(valor), 0)
     FROM vales
     """)
 
     total = cursor.fetchone()[0]
 
     conn.close()
+    return total
 
-    return total if total is not None else 0
+def calcular_total_vales_por_socio(id_socio):
+    conn = conectar()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT COALESCE(SUM(valor), 0)
+    FROM vales
+    WHERE id_socio = ?
+    """, (id_socio,))
+
+    total = cursor.fetchone()[0]
+
+    conn.close()
+    return total
+
+def calcular_total_vales_semana(semana_id):
+    conn = conectar()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT COALESCE(SUM(valor), 0)
+    FROM vales
+    WHERE semana_id = ?
+    """, (semana_id,))
+
+    total = cursor.fetchone()[0]
+
+    conn.close()
+    return total
+
+def quantidade_vales_semana(id_socio):
+
+    conn = conectar()
+    cursor = conn.cursor()
+
+    semana_id = semana_atual()
+
+    cursor.execute("""
+    SELECT COUNT(*)
+    FROM vales
+    WHERE id_socio = ?
+    AND semana_id = ?
+    """, (id_socio, semana_id))
+
+    quantidade = cursor.fetchone()[0]
+
+    conn.close()
+
+    return quantidade
+
+def somar_vales_semana(id_socio):
+    conn = conectar()
+    cursor = conn.cursor()
+
+    semana_id = semana_atual()
+
+    cursor.execute("""
+    SELECT COALESCE(SUM(valor), 0)
+    FROM vales
+    WHERE id_socio = ?
+    AND semana_id = ?
+    """, (id_socio, semana_id))
+
+    total = cursor.fetchone()[0]
+
+    conn.close()
+
+    return total
+
+def semana_atual():
+    return datetime.now().isocalendar()[1]
