@@ -420,5 +420,23 @@ def somar_vales_semana(id_socio):
 
     return total
 
+def verificar_id(id_socio):
+    conn = conectar()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT id FROM socios WHERE id = ?",
+        (id_socio,)
+    )
+
+    resultado = cursor.fetchone()
+
+    conn.close()
+
+    if resultado:
+        return True
+    else:
+        return False
+
 def semana_atual():
     return datetime.now().isocalendar()[1]
