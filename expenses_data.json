@@ -1,0 +1,14 @@
+{
+  "socios": [
+    {
+      "id": 1,
+      "nome": "Jhonatan"
+    },
+    {
+      "id": 2,
+      "nome": "Irmao"
+    }
+  ],
+  "servicos": [],
+  "vales": []
+}
