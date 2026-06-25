@@ -94,16 +94,15 @@ def listar_socios():
 
     return socios
 
-def atualizar_socio(id_socio, novo_nome):
-
+def atualizar_socio(id_socio, novo_nome, novo_email):
     conn = conectar()
     cursor = conn.cursor()
 
     cursor.execute("""
-    UPDATE socios
-    SET nome = ?
-    WHERE id = ?
-    """, (novo_nome, id_socio))
+        UPDATE socios
+        SET nome = ?, email = ?
+        WHERE id = ?
+    """, (novo_nome, novo_email, id_socio))
 
     conn.commit()
     conn.close()
@@ -124,11 +123,11 @@ def buscar_dados_socio(id_socio):
     conn = conectar()
     cursor = conn.cursor()
 
-    # dados do sócio
+    # Dados do sócio
     cursor.execute("""
-    SELECT nome, foto
-    FROM socios
-    WHERE id = ?
+        SELECT nome, email, foto
+        FROM socios
+        WHERE id = ?
     """, (id_socio,))
 
     socio = cursor.fetchone()
@@ -137,13 +136,13 @@ def buscar_dados_socio(id_socio):
         conn.close()
         return None
 
-    nome, foto = socio
+    nome, email, foto = socio
 
-    # vales do sócio
+    # Vales do sócio
     cursor.execute("""
-    SELECT COUNT(*), COALESCE(SUM(valor), 0)
-    FROM vales
-    WHERE id_socio = ?
+        SELECT COUNT(*), COALESCE(SUM(valor), 0)
+        FROM vales
+        WHERE id_socio = ?
     """, (id_socio,))
 
     quantidade_vales, total_vales = cursor.fetchone()
@@ -152,6 +151,7 @@ def buscar_dados_socio(id_socio):
 
     return {
         "nome": nome,
+        "email": email,
         "foto": foto,
         "quantidade_vales": quantidade_vales,
         "total_vales": total_vales
