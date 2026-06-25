@@ -1,5 +1,4 @@
 config.ini
-expenses_data.json
 __pycache__/
 dist/
 build/

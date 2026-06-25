@@ -47,6 +47,18 @@ def criar_tabelas():
     )
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS configuracao_email (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        smtp_server TEXT NOT NULL,
+        smtp_port INTEGER NOT NULL,
+        email TEXT NOT NULL,
+        senha TEXT NOT NULL,
+        ativo INTEGER DEFAULT 1,
+        data_cadastro DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
     conn.commit()
     conn.close()
     
@@ -440,3 +452,62 @@ def somar_vales_semana(id_socio):
 
 def semana_atual():
     return datetime.now().isocalendar()[1]
+
+# ==============tabela confing email====================
+#
+# ======================================================
+
+def salvar_configuracao_email(
+        
+    smtp_server,
+    smtp_port,
+    email,
+    senha
+):
+    conn = conectar()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE configuracao_email
+        SET smtp_server = ?,
+            smtp_port = ?,
+            email = ?,
+            senha = ?
+        WHERE id = 1
+    """, (
+        smtp_server,
+        smtp_port,
+        email,
+        senha
+    ))
+
+    conn.commit()
+    conn.close()
+
+def carregar_configuracao_email():
+    conn = conectar()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            smtp_server,
+            smtp_port,
+            email,
+            senha
+        FROM configuracao_email
+        WHERE id = 1
+    """)
+
+    resultado = cursor.fetchone()
+
+    conn.close()
+
+    if not resultado:
+        return None
+
+    return {
+        "smtp_server": resultado[0],
+        "smtp_port": resultado[1],
+        "email": resultado[2],
+        "senha": resultado[3]
+    }
