@@ -85,14 +85,23 @@ def listar_socios():
     cursor = conn.cursor()
 
     cursor.execute("""
-    SELECT * FROM socios
+        SELECT id, nome, email, foto
+        FROM socios
     """)
 
     socios = cursor.fetchall()
 
     conn.close()
 
-    return socios
+    return [
+        {
+            "id": socio[0],
+            "nome": socio[1],
+            "email": socio[2],
+            "foto": socio[3]
+        }
+        for socio in socios
+    ]
 
 def atualizar_socio(id_socio, novo_nome, novo_email):
     conn = conectar()
