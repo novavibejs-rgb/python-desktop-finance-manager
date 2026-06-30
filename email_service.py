@@ -208,13 +208,15 @@ class ServicoEmail:
         # envia para funcionário
         self.enviar_email(email_funcionario, assunto, corpo)
 
-        # envia para admin
+        # Envia para o administrador (se for diferente do funcionário)
         if self.config and self.config.has_option("EMAIL", "admin_email"):
             admin_email = self.config.get("EMAIL", "admin_email")
-            self.enviar_email(admin_email, f"[ADMIN] {assunto}", corpo)
+
+            if admin_email.lower() != email_funcionario.lower():
+                self.enviar_email(admin_email, f"[ADMIN] {assunto}", corpo)
 
         return True
-
+    
     def enviar_notificacao_servico(self,cliente,valor,servico,forma_pagamento,descricao):    
         """Notificação de serviço registrado"""
 
