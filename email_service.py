@@ -178,9 +178,9 @@ class ServicoEmail:
             <body style="font-family: Arial; background-color: #f5f5f5; padding: 20px;">
                 <div style="background-color: white; padding: 20px; border-radius: 8px;">
                     
-                    <h2>✓ Vale Autorizado</h2>
+                   <h2 style="background:#1f4e79;color:#ffffff;padding:20px;border-radius:8px;margin:0;">✅ Vale Autorizado</h2>
 
-                    <p><strong>Funcionário:</strong> {nome_funcionario}</p>
+                    <p><strong>ID ->{id_socio}:</strong> {nome_funcionario}</p>
 
                     <p><strong>Data:</strong> {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}</p>
                     <p><strong>Motivo:</strong> {motivo}</p>
