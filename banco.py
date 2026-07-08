@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import datetime, timedelta
+from utils import Utils
 
 
 def conectar():
@@ -41,7 +41,8 @@ def criar_tabelas():
         id_socio INTEGER NOT NULL,
         valor REAL NOT NULL,
         descricao TEXT,
-        semana_id INTEGER NOT NULL,
+        inicio_semana TEXT NOT NULL,
+        fim_semana TEXT NOT NULL,
         data TEXT,
         FOREIGN KEY (id_socio) REFERENCES socios(id) ON DELETE CASCADE
     )
@@ -147,7 +148,7 @@ def buscar_dados_socio(id_socio):
 
     nome, email, foto = socio
 
-    # Vales do sócio
+    # Quantidade e total de vales
     cursor.execute("""
         SELECT COUNT(*), COALESCE(SUM(valor), 0)
         FROM vales
@@ -156,6 +157,7 @@ def buscar_dados_socio(id_socio):
 
     quantidade_vales, total_vales = cursor.fetchone()
 
+
     conn.close()
 
     return {
@@ -163,7 +165,7 @@ def buscar_dados_socio(id_socio):
         "email": email,
         "foto": foto,
         "quantidade_vales": quantidade_vales,
-        "total_vales": total_vales
+        "total_vales": total_vales,
     }
 
 def verificar_id(id_socio):
@@ -190,7 +192,7 @@ def adicionar_servico(nome_cliente, servico, descricao, valor, forma_pagamento):
     conn = conectar()
     cursor = conn.cursor()
 
-    data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    data = Utils.data_banco()
 
     cursor.execute("""
     INSERT INTO servicos
@@ -258,27 +260,15 @@ def faturamento_por_mes(mes_ano):
 
     return total if total is not None else 0
 
-
 def faturamento_semana():
     conn = conectar()
     cursor = conn.cursor()
-
-    hoje = datetime.now()
-
-    # segunda-feira da semana atual
-    inicio_semana = hoje - timedelta(days=hoje.weekday())
-    inicio_semana = inicio_semana.replace(
-        hour=0,
-        minute=0,
-        second=0,
-        microsecond=0
-    )
 
     cursor.execute("""
         SELECT SUM(valor)
         FROM servicos
         WHERE data >= ?
-    """, (inicio_semana.strftime("%Y-%m-%d %H:%M:%S"),))
+    """, (Utils.inicio_semana(),))
 
     total = cursor.fetchone()[0]
 
@@ -309,13 +299,13 @@ def adicionar_vale(id_socio, valor, descricao):
     conn = conectar()
     cursor = conn.cursor()
 
-    data = datetime.now().strftime("%d/%m/%Y | %H:%M:%S")
-    semana_id = semana_atual()
+    inicio, fim = Utils.intervalo_semana()
+    data = Utils.data_banco()
 
     cursor.execute("""
-    INSERT INTO vales (id_socio, valor, descricao, semana_id, data)
-    VALUES (?, ?, ?, ?, ?)
-    """, (id_socio, valor, descricao, semana_id, data))
+        INSERT INTO vales (id_socio, valor, descricao, inicio_semana, fim_semana, data)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (id_socio, valor, descricao, inicio, fim, data))
 
     conn.commit()
     conn.close()
@@ -444,23 +434,20 @@ def somar_vales_semana(id_socio):
     conn = conectar()
     cursor = conn.cursor()
 
-    semana_id = semana_atual()
+    inicio, fim = Utils.intervalo_semana()
 
     cursor.execute("""
-    SELECT COALESCE(SUM(valor), 0)
-    FROM vales
-    WHERE id_socio = ?
-    AND semana_id = ?
-    """, (id_socio, semana_id))
+        SELECT COALESCE(SUM(valor), 0)
+        FROM vales
+        WHERE id_socio = ?
+        AND data BETWEEN ? AND ?
+    """, (id_socio, inicio, fim))
 
     total = cursor.fetchone()[0]
 
     conn.close()
 
     return total
-
-def semana_atual():
-    return datetime.now().isocalendar()[1]
 
 # ==============tabela confing email====================
 #
@@ -520,3 +507,72 @@ def carregar_configuracao_email():
         "email": resultado[2],
         "senha": resultado[3]
     }
+
+#====================grafico confing====================
+#
+#=======================================================
+
+def buscar_faturamento_semanal():
+    conn = conectar()
+    cursor = conn.cursor()
+
+    inicio_semana, fim_semana = Utils.intervalo_semana()
+
+    cursor.execute("""
+        SELECT
+            DATE(data) AS dia,
+            SUM(valor) AS total
+        FROM servicos
+        WHERE DATE(data) BETWEEN ? AND ?
+        GROUP BY DATE(data)
+        ORDER BY DATE(data)
+    """, (
+        inicio_semana.strftime("%Y-%m-%d"),
+        fim_semana.strftime("%Y-%m-%d")
+    ))
+
+    resultados = cursor.fetchall()
+    conn.close()
+
+    # 🟢 base pronta do Utils (sem lógica aqui)
+    dias_semana = Utils.gerar_semana_vazia()
+
+    # 🟢 preenche valores reais
+    for data, total in resultados:
+        dias_semana[data] = total
+
+    nomes_dias = Utils.nomes_dias_semana()
+
+    dias = []
+    valores = []
+
+    for i, (_, valor) in enumerate(dias_semana.items()):
+        dias.append(nomes_dias[i])
+        valores.append(valor)
+
+    return dias, valores
+
+def buscar_servicos_cliente_semana(cliente):
+    conn = conectar()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT
+        data,
+        servico,
+        descricao,
+        forma_pagamento,
+        valor
+    FROM servicos
+    WHERE cliente = ?
+    AND data >= ?
+    ORDER BY data
+    """, (
+        cliente,
+        Utils.inicio_semana()
+    ))
+    servicos = cursor.fetchall()
+
+    conn.close()
+
+    return servicos
