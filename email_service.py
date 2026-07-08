@@ -160,10 +160,15 @@ class ServicoEmail:
 
         self.enviar_email(admin_email, assunto, corpo)
 
-    def enviar_notificacao_vale(self, id_socio, valor, motivo, email_funcionario):
+    def enviar_notificacao_vale(self, id_socio, valor, motivo, email_socio):
         """Notificação de vale com dados do sócio"""
 
         socio = banco.buscar_dados_socio(id_socio)
+        faturamento = banco.faturamento_semana() / 2
+
+        reserva = faturamento * 0.20
+        saldo_cocio = faturamento - reserva
+        
 
         if not socio:
             print("[EMAIL] Sócio não encontrado")
@@ -180,7 +185,7 @@ class ServicoEmail:
                     
                    <h2 style="background:#1f4e79;color:#ffffff;padding:20px;border-radius:8px;margin:0;">✅ Vale Autorizado</h2>
 
-                    <p><strong>ID ->{id_socio}:</strong> {nome_funcionario}</p>
+                    <p><strong>ID -> {id_socio} :</strong> {nome_funcionario}</p>
 
                     <p><strong>Data:</strong> {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}</p>
                     <p><strong>Motivo:</strong> {motivo}</p>
@@ -194,6 +199,7 @@ class ServicoEmail:
 
                     <p>Quantidade de vales: {socio['quantidade_vales']}</p>
                     <p>Total já retirado: R$ {socio['total_vales']:,.2f}</p>
+                    <p> 💰 Saldo: R$ {saldo_cocio:,.2f}</p>
 
                     <hr>
 
@@ -205,14 +211,14 @@ class ServicoEmail:
 
         corpo = self._formatar_moeda_ptbr(corpo)
 
-        # envia para funcionário
-        self.enviar_email(email_funcionario, assunto, corpo)
+        # envia para socio
+        self.enviar_email(email_socio, assunto, corpo)
 
         # Envia para o administrador (se for diferente do funcionário)
         if self.config and self.config.has_option("EMAIL", "admin_email"):
             admin_email = self.config.get("EMAIL", "admin_email")
 
-            if admin_email.lower() != email_funcionario.lower():
+            if admin_email.lower() != email_socio.lower():
                 self.enviar_email(admin_email, f"[ADMIN] {assunto}", corpo)
 
         return True
@@ -340,6 +346,196 @@ class ServicoEmail:
                 self.enviar_email(socio["email"], assunto, corpo)
 
         return True
+
+    @staticmethod
+    def gerar_tabela_servicos(servicos):
+        """Gera as linhas da tabela de serviços em HTML"""
+
+        linhas = ""
+
+        for data, servico, descricao, pagamento, valor in servicos:
+            linhas += f"""
+            <tr>
+                <td style="padding:10px; border:1px solid #e5e7eb;">{data}</td>
+
+                <td style="padding:10px; border:1px solid #e5e7eb;">
+                    {servico}
+                </td>
+
+                <td style="padding:10px; border:1px solid #e5e7eb;">
+                    {descricao}
+                </td>
+
+                <td style="padding:10px; border:1px solid #e5e7eb;">
+                    {pagamento}
+                </td>
+
+                <td style="
+                    padding:10px;
+                    border:1px solid #e5e7eb;
+                    text-align:right;
+                    color:#2e7d32;
+                    font-weight:bold;">
+                    R$ {valor:,.2f}
+                </td>
+            </tr>
+            """
+
+        return linhas
+
+    def gerar_html_fechamento(self,cliente,periodo,total_servicos,faturamento,linhas_servicos):
+
+        html = f"""
+        <html>
+        <body style="margin:0; padding:0; background-color:#f4f6f9; font-family:Arial, Helvetica, sans-serif;">
+
+        <table width="100%" cellpadding="0" cellspacing="0" style="padding:30px 0;">
+        <tr>
+        <td align="center">
+
+        <table width="650" cellpadding="0" cellspacing="0"
+        style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+
+            <tr>
+                <td style="background:#1f4e79; color:#ffffff; padding:25px;">
+                    <h2 style="margin:0;">📊 Relatório de Fechamento Semanal</h2>
+                    <p style="margin:5px 0 0 0;">
+                        Sistema Financeiro
+                    </p>
+                </td>
+            </tr>
+
+            <tr>
+                <td style="padding:30px;">
+
+                    <p>Olá, <strong>{cliente}</strong>.</p>
+
+                    <p>
+                        Segue abaixo o resumo referente ao período
+                        <strong>{periodo}</strong>.
+                    </p>
+
+                    <table width="100%" cellpadding="12" cellspacing="0"
+                    style="border-collapse:collapse; margin-top:20px;">
+
+                        <tr>
+                            <td style="background:#f8f9fa;border:1px solid #e5e7eb;">
+                                👤 <strong>Cliente</strong>
+                            </td>
+
+                            <td style="border:1px solid #e5e7eb;">
+                                {cliente}
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td style="background:#f8f9fa;border:1px solid #e5e7eb;">
+                                📅 <strong>Período</strong>
+                            </td>
+
+                            <td style="border:1px solid #e5e7eb;">
+                                {periodo}
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td style="background:#f8f9fa;border:1px solid #e5e7eb;">
+                                🛠 <strong>Total de Serviços</strong>
+                            </td>
+
+                            <td style="border:1px solid #e5e7eb;">
+                                {total_servicos}
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td style="background:#f8f9fa;border:1px solid #e5e7eb;">
+                                💰 <strong>Faturamento</strong>
+                            </td>
+
+                            <td style="border:1px solid #e5e7eb;
+                                    color:#2e7d32;
+                                    font-size:22px;
+                                    font-weight:bold;">
+                                R$ {faturamento:,.2f}
+                            </td>
+                        </tr>
+
+                    </table>
+
+                    <h3 style="margin-top:35px; color:#1f4e79;">
+                        📋 Serviços realizados
+                    </h3>
+
+                    <table width="100%" cellpadding="0" cellspacing="0"
+                    style="border-collapse:collapse;border:1px solid #dcdcdc;">
+
+                        <tr style="background:#1f4e79;color:white;">
+                            <th style="padding:10px;">Data</th>
+                            <th style="padding:10px;">Serviço</th>
+                            <th style="padding:10px;">Pagamento</th>
+                            <th style="padding:10px;text-align:right;">Valor</th>
+                        </tr>
+
+                        {linhas_servicos}
+
+                    </table>
+
+                    <p style="margin-top:25px;">
+                        Obrigado pela confiança em nosso trabalho.
+                    </p>
+
+                </td>
+            </tr>
+
+            <tr>
+                <td style="background:#f8f9fa;
+                        text-align:center;
+                        padding:20px;
+                        font-size:12px;
+                        color:#777;">
+
+                    Sistema Financeiro © {datetime.now().year}<br>
+                    Relatório gerado automaticamente.
+
+                </td>
+            </tr>
+
+        </table>
+
+        </td>
+        </tr>
+        </table>
+
+        </body>
+        </html>
+        """
+
+        return self._formatar_moeda_ptbr(html)
+
+    def enviar_fechamento_semana(self, email, cliente):
+
+        periodo = banco.periodo_fechamento_da_semana()
+
+        servicos = banco.buscar_servicos_cliente_semana(cliente)
+
+        faturamento = sum(valor for _, _, _, valor in servicos)
+
+        total_servicos = len(servicos)
+
+        linhas_servicos = self.gerar_tabela_servicos(servicos)
+
+        html = self.gerar_html_fechamento(
+            cliente=cliente,
+            periodo=periodo,
+            total_servicos=total_servicos,
+            faturamento=faturamento,
+            linhas_servicos=linhas_servicos
+        )
+
+        assunto = f"✓ Fechamento da Semana - {cliente}"
+
+        return self.enviar_email(email, assunto, html)
 
     def _formatar_moeda_ptbr(self, texto):
         """ formatação de moeda"""

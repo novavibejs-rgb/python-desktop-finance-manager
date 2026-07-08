@@ -148,7 +148,7 @@ def buscar_dados_socio(id_socio):
 
     nome, email, foto = socio
 
-    # Vales do sócio
+    # Quantidade e total de vales
     cursor.execute("""
         SELECT COUNT(*), COALESCE(SUM(valor), 0)
         FROM vales
@@ -157,6 +157,7 @@ def buscar_dados_socio(id_socio):
 
     quantidade_vales, total_vales = cursor.fetchone()
 
+
     conn.close()
 
     return {
@@ -164,7 +165,7 @@ def buscar_dados_socio(id_socio):
         "email": email,
         "foto": foto,
         "quantidade_vales": quantidade_vales,
-        "total_vales": total_vales
+        "total_vales": total_vales,
     }
 
 def verificar_id(id_socio):
@@ -550,3 +551,28 @@ def buscar_faturamento_semanal():
         valores.append(valor)
 
     return dias, valores
+
+def buscar_servicos_cliente_semana(cliente):
+    conn = conectar()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT
+        data,
+        servico,
+        descricao,
+        forma_pagamento,
+        valor
+    FROM servicos
+    WHERE cliente = ?
+    AND data >= ?
+    ORDER BY data
+    """, (
+        cliente,
+        Utils.inicio_semana()
+    ))
+    servicos = cursor.fetchall()
+
+    conn.close()
+
+    return servicos
