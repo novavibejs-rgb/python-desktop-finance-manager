@@ -148,15 +148,24 @@ def buscar_dados_socio(id_socio):
 
     nome, email, foto = socio
 
-    # Quantidade e total de vales
+    # Semana atual
+    inicio_semana, fim_semana = Utils.intervalo_semana_sql()
+
     cursor.execute("""
-        SELECT COUNT(*), COALESCE(SUM(valor), 0)
+        SELECT
+            COUNT(*),
+            COALESCE(SUM(valor), 0)
         FROM vales
         WHERE id_socio = ?
-    """, (id_socio,))
+        AND data BETWEEN ? AND ?
+    """, (
+        id_socio,
+        inicio_semana,
+        fim_semana
+    ))
+
 
     quantidade_vales, total_vales = cursor.fetchone()
-
 
     conn.close()
 
@@ -299,13 +308,22 @@ def adicionar_vale(id_socio, valor, descricao):
     conn = conectar()
     cursor = conn.cursor()
 
-    inicio, fim = Utils.intervalo_semana()
     data = Utils.data_banco()
 
     cursor.execute("""
-        INSERT INTO vales (id_socio, valor, descricao, inicio_semana, fim_semana, data)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (id_socio, valor, descricao, inicio, fim, data))
+        INSERT INTO vales (
+            id_socio,
+            valor,
+            descricao,
+            data
+        )
+        VALUES (?, ?, ?, ?)
+    """, (
+        id_socio,
+        valor,
+        descricao,
+        data
+    ))
 
     conn.commit()
     conn.close()
@@ -434,7 +452,7 @@ def somar_vales_semana(id_socio):
     conn = conectar()
     cursor = conn.cursor()
 
-    inicio, fim = Utils.intervalo_semana()
+    inicio, fim = Utils.intervalo_semana_sql()
 
     cursor.execute("""
         SELECT COALESCE(SUM(valor), 0)
@@ -516,8 +534,9 @@ def buscar_faturamento_semanal():
     conn = conectar()
     cursor = conn.cursor()
 
-    inicio_semana, fim_semana = Utils.intervalo_semana()
-
+    inicio = Utils.data_sql(Utils.inicio_semana())
+    fim = Utils.data_sql(Utils.fim_semana())
+    
     cursor.execute("""
         SELECT
             DATE(data) AS dia,
@@ -527,8 +546,8 @@ def buscar_faturamento_semanal():
         GROUP BY DATE(data)
         ORDER BY DATE(data)
     """, (
-        inicio_semana.strftime("%Y-%m-%d"),
-        fim_semana.strftime("%Y-%m-%d")
+        inicio,
+        fim
     ))
 
     resultados = cursor.fetchall()
@@ -551,6 +570,8 @@ def buscar_faturamento_semanal():
         valores.append(valor)
 
     return dias, valores
+
+
 
 def buscar_servicos_cliente_semana(cliente):
     conn = conectar()
@@ -576,3 +597,18 @@ def buscar_servicos_cliente_semana(cliente):
     conn.close()
 
     return servicos
+
+def buscar_faturamento_periodo(inicio, fim):
+    cursor = conectar().cursor()
+
+    cursor.execute("""
+        SELECT SUM(valor)
+        FROM servicos
+        WHERE data BETWEEN ? AND ?
+    """, (inicio, fim))
+
+    resultado = cursor.fetchone()
+
+    return resultado[0] if resultado[0] else 0
+
+
