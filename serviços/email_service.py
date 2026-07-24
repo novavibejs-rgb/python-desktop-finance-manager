@@ -2,27 +2,40 @@
 Módulo de serviço de email
 Envia notificações por email
 """
-import banco
+import banco.banco as banco
 import smtplib
-import mimetypes
 import configparser
 import os
-import base64
 from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from utils import Utils
+from utils.utils import Utils
 from email.mime.image import MIMEImage
 from email.utils import make_msgid
 
 
 class ServicoEmail:
+
     def __init__(self, arquivo_config="config.ini"):
-        self.arquivo_config = arquivo_config
+
+        self.pasta = os.path.dirname(__file__)
+
+        self.arquivo_config = os.path.join(
+            self.pasta,
+            arquivo_config
+        )
+
+        self.caminho_logo = os.path.join(
+            self.pasta,
+            "logo.png"
+        )
+
         self.config = self.carregar_config()
 
+
     def carregar_config(self):
-        """Carrega configurações de email"""
+        """Carrega o arquivo de configuração."""
+
         config = configparser.ConfigParser()
 
         if os.path.exists(self.arquivo_config):
@@ -33,7 +46,7 @@ class ServicoEmail:
 
 
     def enviar_email(self, para_email, assunto, corpo):
-        """Envia um email"""
+        """Envia um e-mail."""
 
         try:
 
@@ -53,14 +66,18 @@ class ServicoEmail:
             msg["Subject"] = assunto
 
             corpo = corpo.replace("cid_logo", "logo")
-
             msg.attach(MIMEText(corpo, "html", "utf-8"))
 
-            with open("logo.png", "rb") as img:
-                imagem = MIMEImage(img.read())
-                imagem.add_header("Content-ID", "<logo>")
-                imagem.add_header("Content-Disposition", "inline", filename="logo.png")
-                msg.attach(imagem)
+            if os.path.exists(self.caminho_logo):
+                with open(self.caminho_logo, "rb") as img:
+                    imagem = MIMEImage(img.read())
+                    imagem.add_header("Content-ID", "<logo>")
+                    imagem.add_header(
+                        "Content-Disposition",
+                        "inline",
+                        filename="logo.png"
+                    )
+                    msg.attach(imagem)
 
             with smtplib.SMTP(smtp_servidor, smtp_porta) as servidor:
                 servidor.starttls()
@@ -70,10 +87,10 @@ class ServicoEmail:
             return True
 
         except Exception as e:
-            print(e)
+            print(f"Erro ao enviar e-mail: {e}")
             return False
 
-
+    
     def enviar_notificacao_despesa(self, descricao, valor, categoria):
         """Notificação de despesa"""
         assunto = "✓ Nova Despesa Registrada"

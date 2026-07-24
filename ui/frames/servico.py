@@ -1,7 +1,9 @@
 import customtkinter as ctk
 
-import banco
-from email_service import ServicoEmail
+import banco.banco as banco
+from serviços.email_service import ServicoEmail
+from ui.widgets.mensagem import Mensagem
+
 
 
 class FrameServico(ctk.CTkFrame):
@@ -117,7 +119,7 @@ class FrameServico(ctk.CTkFrame):
         valor_texto = self.entry_valor.get().strip()
 
         if not nome_cliente or not servico or not valor_texto or not forma_pagamento:
-            self.mostrar_mensagem(
+            Mensagem.mostrar(
                 self.label_mensagem_serviço,
                 "Erro: Preencha todos os campos!",
                 erro=True
@@ -128,7 +130,7 @@ class FrameServico(ctk.CTkFrame):
             valor = float(valor_texto)
 
             if valor <= 0:
-                self.mostrar_mensagem(
+                Mensagem.mostrar(
                     self.label_mensagem_serviço,
                     "Erro: O valor deve ser maior que zero!",
                     erro=True
@@ -136,7 +138,7 @@ class FrameServico(ctk.CTkFrame):
                 return
 
         except ValueError:
-            self.mostrar_mensagem(
+            Mensagem.mostrar(
                 self.label_mensagem_serviço,
                 "Erro: Valor inválido! 💥",
                 erro=True
@@ -169,11 +171,8 @@ class FrameServico(ctk.CTkFrame):
         self.textbox_descricao.delete("1.0", "end")
 
 
-        self.mostrar_mensagem(
+        Mensagem.mostrar(
             self.label_mensagem_serviço,
             "Serviço salvo com sucesso ✅",
             erro=False
         )
-
-
-        self.app.atualizar_dashboard()

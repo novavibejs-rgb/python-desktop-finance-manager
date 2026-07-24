@@ -1,8 +1,9 @@
 
 import customtkinter as ctk
 
-import banco
-from email_service import ServicoEmail
+import banco.banco as banco
+from serviços.email_service import ServicoEmail
+from ui.widgets.mensagem import Mensagem
 
 
 class FrameVale(ctk.CTkFrame):
@@ -16,6 +17,7 @@ class FrameVale(ctk.CTkFrame):
         )
 
         self.app = app
+
         self.servico_email = ServicoEmail()
 
         self.criar_tela()
@@ -145,7 +147,7 @@ class FrameVale(ctk.CTkFrame):
 
         # Validação
         if not valor_do_vale or not descricao or not e_mail:
-            self.mostrar_mensagem(
+            Mensagem.mostrar(
                 self.label_mensagem_vale,
                 "❌ Preencha todos os campos!",
                 erro=True
@@ -156,7 +158,7 @@ class FrameVale(ctk.CTkFrame):
             valor = float(valor_do_vale)
 
             if valor <= 0:
-                self.mostrar_mensagem(
+                Mensagem.mostrar(
                     self.label_mensagem_vale,
                     "❌ O valor deve ser maior que zero!",
                     erro=True
@@ -164,7 +166,7 @@ class FrameVale(ctk.CTkFrame):
                 return
 
         except ValueError:
-            self.mostrar_mensagem(
+            Mensagem.mostrar(
                 self.label_mensagem_vale,
                 "❌ Valor inválido!",
                 erro=True
@@ -173,7 +175,7 @@ class FrameVale(ctk.CTkFrame):
 
         # Salvar vale
         try:
-            self.mostrar_mensagem(
+            Mensagem.mostrar(
                 self.label_mensagem_vale,
                 "💾 Salvando vale...",
                 erro=False
@@ -187,7 +189,7 @@ class FrameVale(ctk.CTkFrame):
             )
 
         except Exception as e:
-            self.mostrar_mensagem(
+            Mensagem.mostrar(
                 self.label_mensagem_vale,
                 f"❌ Erro ao salvar vale:\n{e}",
                 erro=True
@@ -196,7 +198,7 @@ class FrameVale(ctk.CTkFrame):
 
         # Enviar e-mail
         try:
-            self.mostrar_mensagem(
+            Mensagem.mostrar(
                 self.label_mensagem_vale,
                 "📧 Enviando notificação por e-mail...",
                 erro=False
@@ -211,35 +213,52 @@ class FrameVale(ctk.CTkFrame):
             )
 
         except Exception as e:
-            self.mostrar_mensagem(
+            Mensagem.mostrar(
                 self.label_mensagem_vale,
                 f"⚠️ Vale salvo, mas o e-mail não foi enviado.\n{e}",
                 erro=True
             )
 
         # Atualizar interface
-        self.mostrar_mensagem(
+        Mensagem.mostrar(
             self.label_mensagem_vale,
             "🔄 Atualizando informações...",
             erro=False
         )
-        self.app.root.update_idletasks()
-
-        self.app.atualizar_dashboard()
         self.atualizar_pagina_vale()
 
         # Finalizado
-        self.mostrar_mensagem(
+        Mensagem.mostrar(
             self.label_mensagem_vale,
             "✅ Vale cadastrado com sucesso!",
             erro=False
         )
 
+    def atualizar_pagina_vale(self):
+        """Limpa todos os campos da tela de vale."""
+
+        # Campos
+        self.id_socio.delete(0, "end")
+        self.motivo_do_vale.delete(0, "end")
+        self.valor_do_vale.delete(0, "end")
+        self.email_do_socio.delete(0, "end")
+        self.textbox_descricao_vale.delete("1.0", "end")
+
+        # Nome do sócio
+        self.lbl_nome_socio.configure(text="")
+
+        # Foto do sócio
+        self.lbl_foto_socio.configure(image=None, text="")
+        self.lbl_foto_socio.image = None
+
+        # Mensagem
+        self.label_mensagem_vale.configure(text="")
+
     def trazer_dados_id_vales(self):
         id_socio = self.id_socio.get().strip()
 
         if not id_socio:
-            self.mostrar_mensagem(
+            Mensagem.mostrar(
                 self.label_mensagem_vale,
                 "Informe o ID do sócio!",
                 erro=True
@@ -247,7 +266,7 @@ class FrameVale(ctk.CTkFrame):
             return
 
         if not banco.verificar_id(id_socio):
-            self.mostrar_mensagem(
+            Mensagem.mostrar(
                 self.label_mensagem_vale,
                 "ID inválido!",
                 erro=True
@@ -267,4 +286,3 @@ class FrameVale(ctk.CTkFrame):
         self.lbl_nome_socio.configure(
             text=dados["nome"]
         )
-    

@@ -1,6 +1,6 @@
 
 import customtkinter as ctk
-from utils import Utils
+from utils.utils import Utils
 
 from ui.frames.inicio import FrameInicio
 from ui.frames.perfil import FramePerfil
@@ -191,23 +191,6 @@ class App:
     def mostrar_inicio(self):
         self.frame_inicio.tkraise()
 
-  
-# ==========================================================
-# FUNÇÕES AUXILIARES
-# ==========================================================
-    
-    def mostrar_mensagem(self, label, texto, erro=False):
-        cor = "#850202" if erro else "#13E75A"
-
-        label.configure(
-            text=texto,
-            text_color=cor
-        )
-
-        label.after(
-            3000,
-            lambda: label.configure(text="")
-        )
 
 # ==========================================================
 # ATUALIZAÇÃO DA INTERFACE
@@ -221,3 +204,6 @@ class App:
     def atualizar_dashboard(self):
         self.frame_inicio.atualizar()
         self.frame_perfil.atualizar()
+
+    def atualizar_tela(self): 
+        self.root.update_idletasks()

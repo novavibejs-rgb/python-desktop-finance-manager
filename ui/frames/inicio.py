@@ -1,7 +1,7 @@
 import customtkinter as ctk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-import banco
+import banco.banco as banco
 
 
 class FrameInicio(ctk.CTkFrame):

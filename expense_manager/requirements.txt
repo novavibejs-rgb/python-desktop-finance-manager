@@ -1,8 +1,0 @@
-# Dependências do Programa de Gerenciamento de Despesas
-# Instale com: pip install -r requirements.txt
-
-# Tkinter já vem com Python, mas pode precisar instalar em Linux:
-# Ubuntu/Debian: sudo apt-get install python3-tk
-
-# Dependências externas:
-# (A maioria já vem com Python, mas listamos por clareza)

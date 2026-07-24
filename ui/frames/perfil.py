@@ -2,7 +2,7 @@ import customtkinter as ctk
 from tkinter import filedialog
 from PIL import Image, ImageDraw
 
-import banco
+import banco.banco as banco
 
 
 class FramePerfil(ctk.CTkFrame):
